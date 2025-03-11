@@ -6,11 +6,11 @@ use byteorder::ReadBytesExt;
 
 use pulseaudio::protocol as ps;
 
-const SAMPLES: usize = 256;
+const SAMPLES: usize = 4096;
 pub static mut SAMPLEBUF: [f32; SAMPLES] = [0.0; SAMPLES];
 
 pub struct Audio {
-	sock: BufReader<UnixStream>,
+	pub sock: BufReader<UnixStream>,
 	sinf: ps::CreateRecordStreamReply,
 	buf:  Vec<u8>,
 }
