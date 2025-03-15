@@ -99,21 +99,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "realfft"
-version = "3.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "390252372b7f2aac8360fc5e72eba10136b166d6faeed97e6d0c8324eb99b2b1"
-dependencies = [
- "rustfft",
-]
-
-[[package]]
 name = "rust-fft"
 version = "0.1.0"
 dependencies = [
  "byteorder",
  "pulseaudio",
- "realfft",
  "rustfft",
 ]
 

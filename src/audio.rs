@@ -6,8 +6,9 @@ use byteorder::ReadBytesExt;
 
 use pulseaudio::protocol as ps;
 
-const SAMPLES: usize = 4096;
-pub static mut SAMPLEBUF: [f32; SAMPLES] = [0.0; SAMPLES];
+const SAMPLE_COUNT = 8192;
+pub static mut SAMPLEBUF: [f32; 8192] = [0.0; 4096];
+pub static mut FINAL_SAMPLEBUF: [f32; 1024] = [0.0; 1024];
 
 pub struct Audio {
 	pub sock: BufReader<UnixStream>,
@@ -85,36 +86,63 @@ impl Audio {
 		println!("record strim reply {:#?}", sinf);
 
 		Ok(Self {
-			buf: vec![0; SAMPLES * 4],
+			buf: vec![0; 4096],
 			sock, sinf,
 		})
 	}
 
-	pub fn read_stream(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+	pub fn read_stream(&mut self) -> Result<Option<bool>, Box<dyn std::error::Error>> {
 		// note: make sure pavucontrol is running to ensure that
 		// pulseaudio is going to play nice and not have really bad
 		// latency (around 2 seconds between reads if pavucontrol is off)
-		self.sock.read_exact(&mut self.buf)?;
+		let n = self.sock.read(&mut self.buf)?;
 
-		let mut cursor = Cursor::new(self.buf.as_slice());
+		println!("what is buf len {} - n bytes read {}", self.buf.len(), n);
+		// if n < 1024 { return Ok(Some(false)); }
+
+		let mut cursor = Cursor::new(&self.buf[..n]);
+		println!("cursor len {}", cursor.get_ref().len());
+
+		println!("cursor {:?}", cursor.get_ref());
 		let mut i = 0;
 
-		while cursor.position() < cursor.get_ref().len() as u64 {
-			unsafe { 
-				SAMPLEBUF[i] = cursor.read_i32::<byteorder::LittleEndian>()? as f32; 
+		// wait until SAMPLEBUF is fully filled?? and then continue??
+		// right now the cursor is not at the length of the SAMPLEBUF
+		// no idea what the fuck is happening here....
+		// if the cursor is a length of 1024, it doesn't read 1024 items into the buffer!!!
+		// what!!!!!!!!!!!!!!!!!!!!!!!!
+		'blah: while cursor.position() < cursor.get_ref().len() as u64 {
+			unsafe {
+				let val = cursor.read_i32::<byteorder::LittleEndian>()? as f32; 
+				// println!("{i} fucking val {}", val);
+				SAMPLEBUF[i] = val;
 			}
 
 			i += 1;
-			if i >= unsafe { SAMPLEBUF.len() } { break; }
+			// println!("{i}");
+			// if i == cursor.get_ref().len() { break 'blah; }
+			// if i >= unsafe { SAMPLEBUF.len() } { break 'blah; }
 		}
 
 		unsafe {
-			if i < SAMPLEBUF.len() {
-				(i..SAMPLEBUF.len()).for_each(|i| SAMPLEBUF[i] = 0.0);
-			}
+			// if i < SAMPLEBUF.len() {
+			// 	(i..SAMPLEBUF.len()).for_each(|i| SAMPLEBUF[i] = 0.0);
+			// }
 		}
 
-		Ok(())
+		// println!("buf in method after read {:?}", unsafe { SAMPLEBUF });
+		println!("\nbuf len in method items with fucking value \n{:?}", unsafe { SAMPLEBUF.iter().filter(|i| **i > 0.0 || **i < 0.0).collect::<Vec<_>>().len() });
+		unsafe {
+			'something: for i in 0..SAMPLEBUF.len() {
+
+				FINAL_SAMPLEBUF[i] = SAMPLEBUF[i];
+				if i == 1023 { break 'something; }
+			}
+		}
+		println!("buf len in method {:?}", unsafe { SAMPLEBUF.iter().filter(|i| **i > 0.0 || **i < 0.0).collect::<Vec<_>>().len() });
+		// println!("final buf {:?}", unsafe { FINAL_SAMPLEBUF });
+
+		Ok(Some(true))
 	}
 
 	pub fn sample_rate(&self) -> u32 
