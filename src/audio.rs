@@ -108,9 +108,7 @@ impl Audio {
 
 		// wait until SAMPLEBUF is fully filled?? and then continue??
 		// right now the cursor is not at the length of the SAMPLEBUF
-		// no idea what the fuck is happening here....
 		// if the cursor is a length of 1024, it doesn't read 1024 items into the buffer!!!
-		// what!!!!!!!!!!!!!!!!!!!!!!!!
 		'blah: while cursor.position() < cursor.get_ref().len() as u64 {
 			unsafe {
 				let val = cursor.read_i32::<byteorder::LittleEndian>()? as f32; 
