@@ -6,8 +6,8 @@ use byteorder::ReadBytesExt;
 
 use pulseaudio::protocol as ps;
 
-const SAMPLE_COUNT = 8192;
-pub static mut SAMPLEBUF: [f32; 8192] = [0.0; 4096];
+const SAMPLE_COUNT: usize = 8192;
+pub static mut SAMPLEBUF: [f32; 8192] = [0.0; 8192];
 pub static mut FINAL_SAMPLEBUF: [f32; 1024] = [0.0; 1024];
 
 pub struct Audio {
@@ -114,7 +114,6 @@ impl Audio {
 		'blah: while cursor.position() < cursor.get_ref().len() as u64 {
 			unsafe {
 				let val = cursor.read_i32::<byteorder::LittleEndian>()? as f32; 
-				// println!("{i} fucking val {}", val);
 				SAMPLEBUF[i] = val;
 			}
 
@@ -131,7 +130,7 @@ impl Audio {
 		}
 
 		// println!("buf in method after read {:?}", unsafe { SAMPLEBUF });
-		println!("\nbuf len in method items with fucking value \n{:?}", unsafe { SAMPLEBUF.iter().filter(|i| **i > 0.0 || **i < 0.0).collect::<Vec<_>>().len() });
+		println!("\nbuf len in method items with value \n{:?}", unsafe { SAMPLEBUF.iter().filter(|i| **i > 0.0 || **i < 0.0).collect::<Vec<_>>().len() });
 		unsafe {
 			'something: for i in 0..SAMPLEBUF.len() {
 

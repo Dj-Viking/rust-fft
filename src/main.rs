@@ -40,7 +40,7 @@ fn main() {
 fn hann_window(buf: &mut [f32]) {
 	let len = buf.len();
 	for i in 0..len {
-		let mul = (1.0 - (2.0 * PI * i as f32 / ((len - 1) as f32)).cos());
+		let mul = 1.0 - (2.0 * PI * i as f32 / ((len - 1) as f32)).cos();
 		buf[i] *= 0.5 * mul;
 	}
 }
